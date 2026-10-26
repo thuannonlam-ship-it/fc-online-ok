@@ -103,7 +103,207 @@ for (const side of [-1, 1]) {
   }
 }
 
+
 function createPlayer(color, x, z, isUser = false) {
+  const group = new THREE.Group();
+
+  const jerseyColor = new THREE.Color(color);
+  const skinColor = 0xd9a078;
+  const skin = new THREE.MeshStandardMaterial({
+    color: skinColor,
+    roughness: 0.82
+  });
+  const hair = new THREE.MeshStandardMaterial({
+    color: 0x30231d,
+    roughness: 0.92
+  });
+  const dark = new THREE.MeshStandardMaterial({
+    color: 0x171b25,
+    roughness: 0.85
+  });
+  const white = new THREE.MeshStandardMaterial({
+    color: 0xf4f4ef,
+    roughness: 0.75
+  });
+  const jersey = new THREE.MeshStandardMaterial({
+    color: jerseyColor,
+    roughness: 0.72
+  });
+  const shortsMat = new THREE.MeshStandardMaterial({
+    color: jerseyColor.clone().multiplyScalar(0.68),
+    roughness: 0.82
+  });
+  const eyeWhite = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.4
+  });
+  const iris = new THREE.MeshStandardMaterial({
+    color: 0x39271b,
+    roughness: 0.35
+  });
+
+  function addMesh(geometry, material, px, py, pz,
+                   sx = 1, sy = 1, sz = 1) {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(px, py, pz);
+    mesh.scale.set(sx, sy, sz);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+    return mesh;
+  }
+
+  function addLimb(px, py, pz, radiusTop, radiusBottom,
+                   length, material) {
+    const mesh = addMesh(
+      new THREE.CylinderGeometry(
+        radiusTop, radiusBottom, length, 10
+      ),
+      material, px, py, pz
+    );
+    return mesh;
+  }
+
+  // Giày và chân
+  for (const side of [-1, 1]) {
+    addLimb(side * 0.105, 0.37, 0, 0.075, 0.095, 0.42, skin);
+    addMesh(
+      new THREE.SphereGeometry(0.105, 12, 10),
+      shortsMat, side * 0.105, 0.61, 0
+    );
+
+    addMesh(
+      new THREE.CapsuleGeometry(0.055, 0.22, 4, 8),
+      white, side * 0.105, 0.16, 0
+    );
+
+    addMesh(
+      new THREE.BoxGeometry(0.13, 0.09, 0.23),
+      dark, side * 0.105, 0.075, 0.045
+    );
+
+    // Tay áo, cánh tay và bàn tay
+    const arm = addLimb(
+      side * 0.285, 1.13, 0,
+      0.075, 0.09, 0.32, jersey
+    );
+    arm.rotation.z = side * -0.12;
+
+    const forearm = addLimb(
+      side * 0.32, 0.89, 0.015,
+      0.045, 0.065, 0.23, skin
+    );
+    forearm.rotation.z = side * -0.08;
+
+    addMesh(
+      new THREE.SphereGeometry(0.055, 10, 8),
+      skin, side * 0.33, 0.75, 0.02
+    );
+  }
+
+  // Thân người và áo đấu
+  addMesh(
+    new THREE.CapsuleGeometry(0.19, 0.39, 5, 12),
+    jersey, 0, 1.12, 0, 1.0, 1.0, 0.72
+  );
+
+  // Cổ áo
+  addMesh(
+    new THREE.CylinderGeometry(0.075, 0.085, 0.12, 12),
+    skin, 0, 1.42, 0
+  );
+
+  addMesh(
+    new THREE.TorusGeometry(0.079, 0.014, 6, 16),
+    white, 0, 1.39, 0
+  );
+
+  // Số áo ở mặt trước
+  const numberCanvas = document.createElement("canvas");
+  numberCanvas.width = 128;
+  numberCanvas.height = 128;
+  const ctx = numberCanvas.getContext("2d");
+
+  ctx.clearRect(0, 0, 128, 128);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 72px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(isUser ? "10" : "7", 64, 64);
+
+  const numberTexture = new THREE.CanvasTexture(numberCanvas);
+  const numberMaterial = new THREE.MeshBasicMaterial({
+    map: numberTexture,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+
+  addMesh(
+    new THREE.PlaneGeometry(0.19, 0.19),
+    numberMaterial, 0, 1.12, 0.139
+  );
+
+  // Đầu: hình oval thay vì quả cầu tròn đều
+  addMesh(
+    new THREE.SphereGeometry(0.155, 24, 20),
+    skin, 0, 1.65, 0, 0.88, 1.08, 0.88
+  );
+
+  // Tai hai bên
+  for (const side of [-1, 1]) {
+    addMesh(
+      new THREE.SphereGeometry(0.043, 12, 10),
+      skin, side * 0.145, 1.65, 0
+    );
+  }
+
+  // Tóc phủ đỉnh đầu
+  addMesh(
+    new THREE.SphereGeometry(0.157, 20, 14),
+    hair, 0, 1.73, -0.012, 0.94, 0.64, 0.94
+  );
+
+  // Mái tóc phía trước
+  addMesh(
+    new THREE.SphereGeometry(0.105, 16, 12),
+    hair, 0, 1.755, 0.105, 1.15, 0.42, 0.5
+  );
+
+  // Lông mày và mắt ở mặt trước (+Z)
+  for (const side of [-1, 1]) {
+    addMesh(
+      new THREE.BoxGeometry(0.065, 0.018, 0.018),
+      hair, side * 0.055, 1.68, 0.126
+    );
+
+    addMesh(
+      new THREE.SphereGeometry(0.027, 12, 10),
+      eyeWhite, side * 0.055, 1.65, 0.133
+    );
+
+    addMesh(
+      new THREE.SphereGeometry(0.014, 10, 8),
+      iris, side * 0.055, 1.65, 0.157
+    );
+  }
+
+  // Mũi và miệng
+  addMesh(
+    new THREE.SphereGeometry(0.027, 10, 8),
+    skin, 0, 1.625, 0.148, 0.7, 1.0, 0.8
+  );
+
+  addMesh(
+    new THREE.BoxGeometry(0.055, 0.009, 0.008),
+    dark, 0, 1.585, 0.143
+  );
+
+  group.position.set(x, 0, z);
+  group.userData.isUser = isUser;
+
+  return group;
+}(color, x, z, isUser = false) {
   const group = new THREE.Group();
 
   const shirt = new THREE.MeshStandardMaterial({ color });
