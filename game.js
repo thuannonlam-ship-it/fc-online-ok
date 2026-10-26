@@ -348,3 +348,32 @@ addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
+let cardLevel = 1;
+
+const rates = {
+  1: 0.90,
+  2: 0.80,
+  3: 0.65,
+  4: 0.50,
+  5: 0.35,
+  6: 0.25,
+  7: 0.15
+};
+
+document.getElementById('upgrade-btn').onclick = () => {
+  const result = document.getElementById('upgrade-result');
+
+  if (cardLevel >= 8) {
+    result.textContent = 'Đã đạt cấp thẻ +8!';
+    return;
+  }
+
+  if (Math.random() < rates[cardLevel]) {
+    cardLevel++;
+    document.getElementById('card-level').textContent =
+      '+' + cardLevel;
+    result.textContent = '🎉 ĐẬP THẺ THÀNH CÔNG!';
+  } else {
+    result.textContent = '💥 Thất bại! Thẻ giữ nguyên cấp.';
+  }
+};
